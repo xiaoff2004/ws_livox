@@ -1,0 +1,338 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="tag16h5_0">
+  
+  <!-- AprilTag 主体尺寸 -->
+  <xacro:property name="x" value="1" />
+  <xacro:property name="y" value="0.5" />
+  <xacro:property name="z" value="${0.75 * x}" />
+  
+
+  <link name="tag16h5_0_link">
+    <visual>
+      <geometry>
+        <box size="${x} ${y} ${z}" />
+      </geometry>
+      <material name="blue">
+        <color rgba="1 0 1 1" />
+      </material>
+    </visual>
+    
+    <collision>
+      <geometry>
+        <box size="${x} ${y} ${z}" />
+      </geometry>
+    </collision>
+    
+    <inertial>
+      <mass value="0.1" />
+      <inertia ixx="${0.1/12 * (y*y + z*z)}" ixy="0.0" ixz="0.0"
+               iyy="${0.1/12 * (x*x + z*z)}" iyz="0.0"
+               izz="${0.1/12 * (x*x + y*y)}" />
+    </inertial>
+  </link>
+
+
+  <!-- =================================================================== -->
+  <!-- 6x6 方块阵列配置说明 -->
+  <!-- =================================================================== -->
+  <!-- 
+  【使用方法】
+  只需提供6x6的参数矩阵,当参数为0时,在该位置放置小长方体障碍物
+  
+  【当前参数矩阵】
+  [[1 1 1 1 1 1],
+   [1 1 1 0 1 1],
+   [1 1 1 0 0 1],
+   [1 1 1 1 0 1],
+   [1 0 1 0 0 1],
+   [1 1 1 1 1 1]]
+  
+  【坐标系说明】
+  - AprilTag主体: 长(X)=1m, 宽(Y)=0.5m, 高(Z)=0.75m, 洋红色
+  - 小方块阵列紧贴AprilTag前表面(+Y方向), 深红色
+  - 小方块尺寸: 长=X/6, 宽=Y, 高=Z/6 (与AprilTag成比例)
+  
+  【阵列排列规则】
+  - 行方向(Z轴): 从上往下, 行索引0在顶部, 行索引5在底部
+  - 列方向(X轴): 从右往左, 列索引0在右侧, 列索引5在左侧
+  - 深度方向(Y轴): 所有小方块紧贴AprilTag前表面
+  
+  【坐标计算公式】
+  X坐标: array_start_x - 列索引 * grid_spacing_x
+  Y坐标: array_start_y (固定值,所有方块Y坐标相同)
+  Z坐标: array_start_z - 行索引 * grid_spacing_z
+  
+  【修改方法】
+  提供新的6x6参数矩阵,标注0的位置会自动生成小方块
+  例如: [[1 0 1 1 1 1],[0 1 1 1 1 1],...] 
+  =================================================================== -->
+
+  <!-- =================================================================== -->
+  <!-- 小长方体参数定义 -->
+  <!-- =================================================================== -->
+  <xacro:property name="block_length" value="${x/6}" />     <!-- 小方块X方向长度 = AprilTag长度/6 -->
+  <xacro:property name="block_width" value="${y}" />        <!-- 小方块Y方向宽度 = AprilTag宽度 -->
+  <xacro:property name="block_height" value="${z/6}" />     <!-- 小方块Z方向高度 = AprilTag高度/6 -->
+  <xacro:property name="block_mass" value="0.01" />         <!-- 小方块质量(kg) -->
+  
+  <!-- =================================================================== -->
+  <!-- 阵列间距和起始位置 -->
+  <!-- =================================================================== -->
+  <xacro:property name="grid_spacing_x" value="${block_length}" />  <!-- X方向网格间距 -->
+  <xacro:property name="grid_spacing_z" value="${z/6}" />           <!-- Z方向网格间距 -->
+  
+  <!-- 阵列起始位置(紧贴AprilTag前表面) -->
+  <xacro:property name="array_start_x" value="${x/2 - block_length/2}" />   <!-- 从AprilTag右边缘开始 -->
+  <xacro:property name="array_start_y" value="${y/2 + block_width/2}" />    <!-- 小方块中心位于AprilTag前表面+宽度/2 -->
+  <xacro:property name="array_start_z" value="${z/2 - block_height/2}" />   <!-- 从AprilTag顶部边缘开始 -->
+
+
+  <!-- =================================================================== -->
+  <!-- 第1行 (i=0): [1 1 1 1 1 1] - 全部为1，无小长方体 -->
+  <!-- =================================================================== -->
+  
+  <!-- =================================================================== -->
+  <!-- 第2行 (i=1): [1 1 1 0 1 1] - 第4个位置(j=3)为0，放置小长方体 -->
+  <!-- =================================================================== -->
+  
+  <!-- 第2行第4列 (1,3) - 小长方体 -->
+  <link name="block_1_3">
+    <visual>
+      <geometry>
+        <box size="${block_length} ${block_width} ${block_height}" />
+      </geometry>
+      <material name="obstacle_red">
+        <color rgba="0.8 0.2 0.2 1" />  <!-- 深红色障碍物 -->
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${block_length} ${block_width} ${block_height}" />
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="${block_mass}" />
+      <inertia ixx="${block_mass/12 * (block_width*block_width + block_height*block_height)}" 
+               ixy="0.0" ixz="0.0"
+               iyy="${block_mass/12 * (block_length*block_length + block_height*block_height)}" 
+               iyz="0.0"
+               izz="${block_mass/12 * (block_length*block_length + block_width*block_width)}" />
+    </inertial>
+  </link>
+  
+  <joint name="tag_to_block_1_3" type="fixed">
+    <parent link="tag16h5_0_link"/>
+    <child link="block_1_3"/>
+    <!-- 第2行第4列: 行索引=1, 列索引=3 -->
+    <origin xyz="${array_start_x - 3*grid_spacing_x} ${array_start_y} ${array_start_z - 1*grid_spacing_z}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- =================================================================== -->
+  <!-- 第3行 (i=2): [1 1 1 0 0 1] - 第4,5个位置(j=3,4)为0，放置小长方体 -->
+  <!-- =================================================================== -->
+  
+  <!-- 第3行第4列 (2,3) - 小长方体 -->
+  <link name="block_2_3">
+    <visual>
+      <geometry>
+        <box size="${block_length} ${block_width} ${block_height}" />
+      </geometry>
+      <material name="obstacle_red">
+        <color rgba="0.8 0.2 0.2 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${block_length} ${block_width} ${block_height}" />
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="${block_mass}" />
+      <inertia ixx="${block_mass/12 * (block_width*block_width + block_height*block_height)}" 
+               ixy="0.0" ixz="0.0"
+               iyy="${block_mass/12 * (block_length*block_length + block_height*block_height)}" 
+               iyz="0.0"
+               izz="${block_mass/12 * (block_length*block_length + block_width*block_width)}" />
+    </inertial>
+  </link>
+  
+  <joint name="tag_to_block_2_3" type="fixed">
+    <parent link="tag16h5_0_link"/>
+    <child link="block_2_3"/>
+    <!-- 第3行第4列: 行索引=2, 列索引=3 -->
+    <origin xyz="${array_start_x - 3*grid_spacing_x} ${array_start_y} ${array_start_z - 2*grid_spacing_z}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- 第3行第5列 (2,4) - 小长方体 -->
+  <link name="block_2_4">
+    <visual>
+      <geometry>
+        <box size="${block_length} ${block_width} ${block_height}" />
+      </geometry>
+      <material name="obstacle_red">
+        <color rgba="0.8 0.2 0.2 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${block_length} ${block_width} ${block_height}" />
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="${block_mass}" />
+      <inertia ixx="${block_mass/12 * (block_width*block_width + block_height*block_height)}" 
+               ixy="0.0" ixz="0.0"
+               iyy="${block_mass/12 * (block_length*block_length + block_height*block_height)}" 
+               iyz="0.0"
+               izz="${block_mass/12 * (block_length*block_length + block_width*block_width)}" />
+    </inertial>
+  </link>
+  
+  <joint name="tag_to_block_2_4" type="fixed">
+    <parent link="tag16h5_0_link"/>
+    <child link="block_2_4"/>
+    <!-- 第3行第5列: 行索引=2, 列索引=4 -->
+    <origin xyz="${array_start_x - 4*grid_spacing_x} ${array_start_y} ${array_start_z - 2*grid_spacing_z}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- =================================================================== -->
+  <!-- 第4行 (i=3): [1 1 1 1 0 1] - 第5个位置(j=4)为0，放置小长方体 -->
+  <!-- =================================================================== -->
+  
+  <!-- 第4行第5列 (3,4) - 小长方体 -->
+  <link name="block_3_4">
+    <visual>
+      <geometry>
+        <box size="${block_length} ${block_width} ${block_height}" />
+      </geometry>
+      <material name="obstacle_red">
+        <color rgba="0.8 0.2 0.2 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${block_length} ${block_width} ${block_height}" />
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="${block_mass}" />
+      <inertia ixx="${block_mass/12 * (block_width*block_width + block_height*block_height)}" 
+               ixy="0.0" ixz="0.0"
+               iyy="${block_mass/12 * (block_length*block_length + block_height*block_height)}" 
+               iyz="0.0"
+               izz="${block_mass/12 * (block_length*block_length + block_width*block_width)}" />
+    </inertial>
+  </link>
+  
+  <joint name="tag_to_block_3_4" type="fixed">
+    <parent link="tag16h5_0_link"/>
+    <child link="block_3_4"/>
+    <!-- 第4行第5列: 行索引=3, 列索引=4 -->
+    <origin xyz="${array_start_x - 4*grid_spacing_x} ${array_start_y} ${array_start_z - 3*grid_spacing_z}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- =================================================================== -->
+  <!-- 第5行 (i=4): [1 0 1 0 0 1] - 第2,4,5个位置(j=1,3,4)为0，放置小长方体 -->
+  <!-- =================================================================== -->
+  
+  <!-- 第5行第2列 (4,1) - 小长方体 -->
+  <link name="block_4_1">
+    <visual>
+      <geometry>
+        <box size="${block_length} ${block_width} ${block_height}" />
+      </geometry>
+      <material name="obstacle_red">
+        <color rgba="0.8 0.2 0.2 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${block_length} ${block_width} ${block_height}" />
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="${block_mass}" />
+      <inertia ixx="${block_mass/12 * (block_width*block_width + block_height*block_height)}" 
+               ixy="0.0" ixz="0.0"
+               iyy="${block_mass/12 * (block_length*block_length + block_height*block_height)}" 
+               iyz="0.0"
+               izz="${block_mass/12 * (block_length*block_length + block_width*block_width)}" />
+    </inertial>
+  </link>
+  
+  <joint name="tag_to_block_4_1" type="fixed">
+    <parent link="tag16h5_0_link"/>
+    <child link="block_4_1"/>
+    <!-- 第5行第2列: 行索引=4, 列索引=1 -->
+    <origin xyz="${array_start_x - 1*grid_spacing_x} ${array_start_y} ${array_start_z - 4*grid_spacing_z}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- 第5行第4列 (4,3) - 小长方体 -->
+  <link name="block_4_3">
+    <visual>
+      <geometry>
+        <box size="${block_length} ${block_width} ${block_height}" />
+      </geometry>
+      <material name="obstacle_red">
+        <color rgba="0.8 0.2 0.2 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${block_length} ${block_width} ${block_height}" />
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="${block_mass}" />
+      <inertia ixx="${block_mass/12 * (block_width*block_width + block_height*block_height)}" 
+               ixy="0.0" ixz="0.0"
+               iyy="${block_mass/12 * (block_length*block_length + block_height*block_height)}" 
+               iyz="0.0"
+               izz="${block_mass/12 * (block_length*block_length + block_width*block_width)}" />
+    </inertial>
+  </link>
+  
+  <joint name="tag_to_block_4_3" type="fixed">
+    <parent link="tag16h5_0_link"/>
+    <child link="block_4_3"/>
+    <!-- 第5行第4列: 行索引=4, 列索引=3 -->
+    <origin xyz="${array_start_x - 3*grid_spacing_x} ${array_start_y} ${array_start_z - 4*grid_spacing_z}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- 第5行第5列 (4,4) - 小长方体 -->
+  <link name="block_4_4">
+    <visual>
+      <geometry>
+        <box size="${block_length} ${block_width} ${block_height}" />
+      </geometry>
+      <material name="obstacle_red">
+        <color rgba="0.8 0.2 0.2 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${block_length} ${block_width} ${block_height}" />
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="${block_mass}" />
+      <inertia ixx="${block_mass/12 * (block_width*block_width + block_height*block_height)}" 
+               ixy="0.0" ixz="0.0"
+               iyy="${block_mass/12 * (block_length*block_length + block_height*block_height)}" 
+               iyz="0.0"
+               izz="${block_mass/12 * (block_length*block_length + block_width*block_width)}" />
+    </inertial>
+  </link>
+  
+  <joint name="tag_to_block_4_4" type="fixed">
+    <parent link="tag16h5_0_link"/>
+    <child link="block_4_4"/>
+    <!-- 第5行第5列: 行索引=4, 列索引=4 -->
+    <origin xyz="${array_start_x - 4*grid_spacing_x} ${array_start_y} ${array_start_z - 4*grid_spacing_z}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- =================================================================== -->
+  <!-- 第6行 (i=5): [1 1 1 1 1 1] - 全部为1，无小长方体 -->
+  <!-- =================================================================== -->
+  
+</robot>

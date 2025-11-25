@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Mid-360 激光雷达仿真机器人描述文件
+  该文件定义了一个简单的机器人，将 Livox Mid-360 激光雷达安装在 base_link 上
+-->
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="mid360_robot">
+
+
+
+  <!-- 导入修正版的 Mid-360 激光雷达 XACRO 定义 -->
+  <xacro:include filename="$(find mid360_simulation)/urdf/mid360.xacro"/>
+ 
+ <!-- 导入Aprilag -->
+  <xacro:include filename="$(find mid360_simulation)/urdf/tag16h5_0.xacro"/>
+
+  <!-- 机器人基础参数定义 - 正方形盒子 -->
+  <xacro:property name="base_mass" value="2.0" />
+  <xacro:property name="base_length" value="0.2" />
+  <xacro:property name="base_width" value="0.2" />
+  <xacro:property name="base_height" value="0.2" />
+
+  <!-- 世界坐标系（可选，用于固定机器人） -->
+  <link name="map"/>
+
+  <!-- 机器人基座链接 -->
+  <link name="base_link">
+    <!-- 惯性属性 -->
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${base_mass}"/>
+      <inertia 
+        ixx="${(base_mass/12) * (base_height*base_height + base_width*base_width)}" 
+        ixy="0.0" 
+        ixz="0.0" 
+        iyy="${(base_mass/12) * (base_height*base_height + base_length*base_length)}" 
+        iyz="0.0" 
+        izz="${(base_mass/12) * (base_length*base_length + base_width*base_width)}"/>
+    </inertial>
+    
+    <!-- 视觉属性 -->
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${base_length} ${base_width} ${base_height}"/>
+      </geometry>
+      <material name="base_material">
+        <color rgba="0.2 0.2 0.8 1.0"/>  <!-- 蓝色基座 -->
+      </material>
+    </visual>
+    
+    <!-- 碰撞属性 -->
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${base_length} ${base_width} ${base_height}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- 世界到基座的关节（固定） -->
+  <joint name="map_to_base" type="fixed">
+    <parent link="map"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+  </joint>
+
+
+
+  <!-- 实例化修正版的 Mid-360 激光雷达 -->
+  <!-- 使用我们修正的版本，传递可视化参数 -->
+  <!-- <xacro:mid360_fixed 
+    name="livox" 
+    parent="base_link" 
+    topic="livox"
+    laser_visualize="${laser_visualize}">
+    <origin xyz="0 0 0.15" rpy="0 0 0"/>
+  </xacro:mid360_fixed> -->
+
+  <xacro:mid360 name="livox" parent="base_link" topic="mid360">
+    <origin xyz="0 0 ${base_height/2 + 0.05}" rpy="0 0 0"/>
+  </xacro:mid360>
+
+  <!-- 将 AprilTag 阵列连接到机器人，避免多根链接错误 -->
+  <joint name="base_to_tag" type="fixed">
+    <parent link="base_link"/>
+    <child link="tag16h5_0_link"/>
+    <origin xyz="${base_length/2 + 0.15} 0 0" rpy="0 0 0"/>
+  </joint>
+
+
+  <!-- Gazebo 材质定义 -->
+  <gazebo reference="base_link">
+    <material>Gazebo/Blue</material>
+    <mu1>0.8</mu1>
+    <mu2>0.8</mu2>
+  </gazebo>
+
+
+
+</robot>
