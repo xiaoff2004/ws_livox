@@ -33,6 +33,10 @@ def generate_launch_description():
     robot_description_content = Command(['xacro ', os.path.join(
         pkg_dir, 'urdf', 'mid360_robot.xacro')])
 
+    # AprilTag 独立模型描述 (通过xacro处理)
+    apriltag_description_content = Command(['xacro ', os.path.join(
+        pkg_dir, 'urdf', 'apriltag_standalone.xacro')])
+
     # 创建 launch 配置变量
     use_sim_time = LaunchConfiguration('use_sim_time')        # 是否使用仿真时间
     use_rviz = LaunchConfiguration('use_rviz')              # 是否启动 RViz
@@ -136,6 +140,39 @@ def generate_launch_description():
         output='screen'
     )
 
+    # 在 Gazebo 中生成 AprilTag 实体
+    spawn_apriltag_node = Node(
+        package='gazebo_ros',
+        executable='spawn_entity.py',
+        name='spawn_apriltag',
+        arguments=[
+            '-entity', 'apriltag_board',        # 实体名称
+            '-topic', '/apriltag_description',  # 从话题读取
+            '-x', '3.0',                        # 初始 X 位置 (机器人前方3米)
+            '-y', '0.0',                        # 初始 Y 位置
+            '-z', '1.0',                        # 初始 Z 位置 (提高到1米,更明显)
+            '-R', '0.0',                        # 初始 Roll 角
+            '-P', '0.0',                        # 初始 Pitch 角
+            '-Y', '0.0'                         # 初始 Yaw 角
+        ],
+        parameters=[{'use_sim_time': use_sim_time}],
+        output='screen'
+    )
+
+    # AprilTag描述发布器
+    apriltag_state_publisher_node = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='apriltag_state_publisher',
+        namespace='apriltag',
+        parameters=[{
+            'use_sim_time': use_sim_time,
+            'robot_description': ParameterValue(apriltag_description_content, value_type=str)
+        }],
+        remappings=[('robot_description', '/apriltag_description')],
+        output='screen'
+    )
+
     # 启动 RViz2 可视化工具（可选）
     rviz_node = Node(
         condition=IfCondition(use_rviz),         # 只有在 use_rviz 参数为 true 时才启动
@@ -164,7 +201,9 @@ def generate_launch_description():
     # 添加机器人相关节点
     ld.add_action(joint_state_publisher_node)   # 关节状态发布器
     ld.add_action(robot_state_publisher_node)   # 机器人状态发布器
+    ld.add_action(apriltag_state_publisher_node) # AprilTag 描述发布器
     ld.add_action(spawn_entity_node)            # 机器人实体生成器
+    ld.add_action(spawn_apriltag_node)          # AprilTag 实体生成器
 
     # 添加可视化工具
     ld.add_action(rviz_node)                    # RViz2 可视化工具

@@ -101,8 +101,8 @@
       <geometry>
         <box size="${block_length} ${block_width} ${block_height}" />
       </geometry>
-      <material name="obstacle_red">
-        <color rgba="0.8 0.2 0.2 1" />  <!-- 深红色障碍物 -->
+      <material name="obstacle_white">
+        <color rgba="1.0 1.0 1.0 1" />  <!-- 白色障碍物 -->
       </material>
     </visual>
     <collision>
@@ -137,8 +137,8 @@
       <geometry>
         <box size="${block_length} ${block_width} ${block_height}" />
       </geometry>
-      <material name="obstacle_red">
-        <color rgba="0.8 0.2 0.2 1" />
+      <material name="obstacle_white">
+        <color rgba="1.0 1.0 1.0 1" />
       </material>
     </visual>
     <collision>
@@ -169,8 +169,8 @@
       <geometry>
         <box size="${block_length} ${block_width} ${block_height}" />
       </geometry>
-      <material name="obstacle_red">
-        <color rgba="0.8 0.2 0.2 1" />
+      <material name="obstacle_white">
+        <color rgba="1.0 1.0 1.0 1" />
       </material>
     </visual>
     <collision>
@@ -205,8 +205,8 @@
       <geometry>
         <box size="${block_length} ${block_width} ${block_height}" />
       </geometry>
-      <material name="obstacle_red">
-        <color rgba="0.8 0.2 0.2 1" />
+      <material name="obstacle_white">
+        <color rgba="1.0 1.0 1.0 1" />
       </material>
     </visual>
     <collision>
@@ -241,8 +241,8 @@
       <geometry>
         <box size="${block_length} ${block_width} ${block_height}" />
       </geometry>
-      <material name="obstacle_red">
-        <color rgba="0.8 0.2 0.2 1" />
+      <material name="obstacle_white">
+        <color rgba="1.0 1.0 1.0 1" />
       </material>
     </visual>
     <collision>
@@ -273,8 +273,8 @@
       <geometry>
         <box size="${block_length} ${block_width} ${block_height}" />
       </geometry>
-      <material name="obstacle_red">
-        <color rgba="0.8 0.2 0.2 1" />
+      <material name="obstacle_white">
+        <color rgba="1.0 1.0 1.0 1" />
       </material>
     </visual>
     <collision>
@@ -305,8 +305,8 @@
       <geometry>
         <box size="${block_length} ${block_width} ${block_height}" />
       </geometry>
-      <material name="obstacle_red">
-        <color rgba="0.8 0.2 0.2 1" />
+      <material name="obstacle_white">
+        <color rgba="1.0 1.0 1.0 1" />
       </material>
     </visual>
     <collision>
@@ -334,5 +334,43 @@
   <!-- =================================================================== -->
   <!-- 第6行 (i=5): [1 1 1 1 1 1] - 全部为1，无小长方体 -->
   <!-- =================================================================== -->
+
+  <!-- =================================================================== -->
+  <!-- Gazebo 材质定义 - 确保在 Gazebo 仿真中显示正确颜色 -->
+  <!-- =================================================================== -->
+  
+  <!-- AprilTag 主体材质 -->
+  <gazebo reference="tag16h5_0_link">
+    <material>Gazebo/Purple</material>
+  </gazebo>
+  
+  <!-- 小方块材质 - 白色 -->
+  <gazebo reference="block_1_3">
+    <material>Gazebo/White</material>
+  </gazebo>
+  
+  <gazebo reference="block_2_3">
+    <material>Gazebo/White</material>
+  </gazebo>
+  
+  <gazebo reference="block_2_4">
+    <material>Gazebo/White</material>
+  </gazebo>
+  
+  <gazebo reference="block_3_4">
+    <material>Gazebo/White</material>
+  </gazebo>
+  
+  <gazebo reference="block_4_1">
+    <material>Gazebo/White</material>
+  </gazebo>
+  
+  <gazebo reference="block_4_3">
+    <material>Gazebo/White</material>
+  </gazebo>
+  
+  <gazebo reference="block_4_4">
+    <material>Gazebo/White</material>
+  </gazebo>
   
 </robot>

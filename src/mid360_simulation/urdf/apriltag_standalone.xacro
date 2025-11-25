@@ -1,0 +1,148 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="apriltag_standalone">
+  
+  <!-- AprilTag 主体尺寸 -->
+  <xacro:property name="x" value="1" />
+  <xacro:property name="y" value="0.5" />
+  <xacro:property name="z" value="0.75" />
+  <xacro:property name="tag_mass" value="0.1" />
+
+  <!-- 预计算主体惯性参数 -->
+  <xacro:property name="tag_ixx" value="0.00677083" />
+  <xacro:property name="tag_iyy" value="0.01302083" />
+  <xacro:property name="tag_izz" value="0.01041667" />
+
+  <!-- 根链接 -->
+  <!-- world link已注释,apriltag_base将作为根链接,可以自由移动 -->
+  <!-- <link name="world"/> -->
+
+  <!-- AprilTag 主体链接 -->
+  <link name="apriltag_base">
+    <visual>
+      <geometry>
+        <box size="${x} ${y} ${z}" />
+      </geometry>
+      <material name="dark_purple">
+        <color rgba="0.4 0.0 0.4 1" />
+      </material>
+    </visual>
+    
+    <collision>
+      <geometry>
+        <box size="${x} ${y} ${z}" />
+      </geometry>
+    </collision>
+    
+    <inertial>
+      <mass value="${tag_mass}" />
+      <inertia ixx="${tag_ixx}" ixy="0.0" ixz="0.0"
+               iyy="${tag_iyy}" iyz="0.0"
+               izz="${tag_izz}" />
+    </inertial>
+  </link>
+
+  <!-- 注释掉固定到世界的joint,让AprilTag可以自由移动 -->
+  <!-- 如果需要固定,取消下面的注释 -->
+  <!--
+  <joint name="world_to_apriltag" type="fixed">
+    <parent link="world"/>
+    <child link="apriltag_base"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  -->
+
+  <!-- 小长方体参数定义 -->
+  <xacro:property name="block_length" value="0.16667" />
+  <xacro:property name="block_width" value="0.5" />
+  <xacro:property name="block_height" value="0.125" />
+  <xacro:property name="block_mass" value="0.01" />
+  
+  <!-- 阵列间距和起始位置 -->
+  <xacro:property name="grid_spacing_x" value="0.16667" />
+  <xacro:property name="grid_spacing_z" value="0.125" />
+  
+  <xacro:property name="array_start_x" value="0.41667" />
+  <xacro:property name="array_start_y" value="0.5" />
+  <xacro:property name="array_start_z" value="0.3125" />
+
+  <!-- 预计算惯性参数 -->
+  <xacro:property name="block_ixx" value="0.00022135" />
+  <xacro:property name="block_iyy" value="0.00003617" />
+  <xacro:property name="block_izz" value="0.00023148" />
+
+  <!-- 小方块宏定义 -->
+  <xacro:macro name="obstacle_block" params="name row col">
+    <link name="block_${name}">
+      <visual>
+        <geometry>
+          <box size="${block_length} ${block_width} ${block_height}" />
+        </geometry>
+        <material name="white">
+          <color rgba="1.0 1.0 1.0 1" />
+        </material>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="${block_length} ${block_width} ${block_height}" />
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="${block_mass}" />
+        <inertia ixx="${block_ixx}" ixy="0.0" ixz="0.0"
+                 iyy="${block_iyy}" iyz="0.0"
+                 izz="${block_izz}" />
+      </inertial>
+    </link>
+    
+    <joint name="tag_to_block_${name}" type="fixed">
+      <parent link="apriltag_base"/>
+      <child link="block_${name}"/>
+      <origin xyz="${array_start_x - col*grid_spacing_x} ${array_start_y} ${array_start_z - row*grid_spacing_z}" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- 实例化7个小方块 -->
+  <xacro:obstacle_block name="1_3" row="1" col="3"/>
+  <xacro:obstacle_block name="2_3" row="2" col="3"/>
+  <xacro:obstacle_block name="2_4" row="2" col="4"/>
+  <xacro:obstacle_block name="3_4" row="3" col="4"/>
+  <xacro:obstacle_block name="4_1" row="4" col="1"/>
+  <xacro:obstacle_block name="4_3" row="4" col="3"/>
+  <xacro:obstacle_block name="4_4" row="4" col="4"/>
+
+  <!-- Gazebo 材质定义 -->
+  <gazebo reference="apriltag_base">
+    <material>Gazebo/DarkGrey</material>
+    <ambient>0.4 0.0 0.4 1</ambient>
+    <diffuse>0.4 0.0 0.4 1</diffuse>
+  </gazebo>
+  
+  <gazebo reference="block_1_3">
+    <material>Gazebo/White</material>
+  </gazebo>
+  
+  <gazebo reference="block_2_3">
+    <material>Gazebo/White</material>
+  </gazebo>
+  
+  <gazebo reference="block_2_4">
+    <material>Gazebo/White</material>
+  </gazebo>
+  
+  <gazebo reference="block_3_4">
+    <material>Gazebo/White</material>
+  </gazebo>
+  
+  <gazebo reference="block_4_1">
+    <material>Gazebo/White</material>
+  </gazebo>
+  
+  <gazebo reference="block_4_3">
+    <material>Gazebo/White</material>
+  </gazebo>
+  
+  <gazebo reference="block_4_4">
+    <material>Gazebo/White</material>
+  </gazebo>
+
+</robot>
